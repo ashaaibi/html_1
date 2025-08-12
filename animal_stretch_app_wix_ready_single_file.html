@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Animal Stretches for Kids</title>
+  <meta name="description" content="A playful, kid‑friendly app that teaches animal‑inspired stretches with timers, voice guidance, and routines." />
+  <style>
+    :root{
+      --bg:#fffdf8;
+      --card:#ffffff;
+      --ink:#1e222b;
+      --muted:#60636f;
+      --brand:#7c5cff; /* lavender */
+      --brand-2:#00c2a8; /* mint */
+      --accent:#ffb23f; /* sunshine */
+      --ok:#35c759;
+      --warn:#ff8a8a;
+      --shadow:0 10px 30px rgba(20,22,30,.12);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink); background: radial-gradient(1200px 800px at 80% -10%, #f6f1ff 0%, transparent 60%), radial-gradient(900px 600px at -10% 110%, #e9fff8 0%, transparent 60%), var(--bg);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:28px;}
+    header{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+    .title{display:flex; gap:14px; align-items:center}
+    .logo{font-size:40px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.08))}
+    h1{font-size:28px; margin:0}
+    .subtitle{color:var(--muted); font-size:14px}
+
+    .controls{display:flex; gap:10px; flex-wrap:wrap}
+    button, .pill{
+      appearance:none; border:0; background:var(--brand);
+      color:white; padding:10px 14px; border-radius:999px; cursor:pointer; font-weight:700; letter-spacing:.2px;
+      box-shadow: var(--shadow);
+    }
+    button.ghost, .pill.ghost{background:#eef0ff; color:#4b36b8}
+    button.secondary{background:var(--brand-2)}
+    button:disabled{opacity:.5; cursor:not-allowed}
+
+    .searchbar{display:flex; gap:10px; align-items:center; background:var(--card); border-radius:999px; padding:8px 12px; box-shadow:var(--shadow)}
+    .searchbar input{border:0; outline:none; background:transparent; font-size:16px; min-width:220px}
+
+    .grid{display:grid; grid-template-columns: repeat( auto-fit, minmax(230px, 1fr) ); gap:16px; margin-top:18px}
+
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; display:flex; flex-direction:column; gap:10px; position:relative; overflow:hidden}
+    .card .tag{position:absolute; top:12px; right:12px; font-size:12px; padding:6px 10px; background:#f4f1ff; color:#4b36b8; border-radius:999px}
+    .icon{font-size:44px}
+    .name{font-size:18px; font-weight:800}
+    .desc{color:var(--muted); font-size:14px; min-height:40px}
+
+    .steps{margin:0; padding-left:20px; color:#2b2f3a}
+    .steps li{margin:6px 0}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .grow{flex:1}
+
+    .timer{
+      display:grid; place-items:center; width:120px; height:120px; border-radius:50%; background:conic-gradient(var(--brand) 0deg, #e9e9ef 0deg);
+      position:relative; margin:8px auto 0;
+    }
+    .timer .inner{width:92px; height:92px; border-radius:50%; background:white; display:grid; place-items:center; box-shadow:inset 0 0 0 1px #eee}
+    .time{font-weight:900; font-size:24px}
+    .tiny{font-size:12px; color:var(--muted)}
+
+    details.routine{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px; margin-top:24px}
+    details.routine summary{cursor:pointer; font-weight:800}
+    .routine-list{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    .chip{background:#f7f7fb; border-radius:999px; padding:8px 10px; font-size:14px; display:flex; align-items:center; gap:8px}
+    .chip input{width:18px; height:18px}
+    .startbar{display:flex; gap:10px; align-items:center; margin-top:14px}
+    .progressline{height:8px; background:#eef0ff; border-radius:999px; overflow:hidden; flex:1}
+    .progressline>span{display:block; height:100%; width:0%; background:linear-gradient(90deg, var(--brand), var(--brand-2)); transition:width .3s ease}
+
+    .footer{margin:28px 0 10px; color:var(--muted); font-size:13px}
+    .note{background:#fff5d9; color:#5e3b00; padding:10px 12px; border-radius:12px}
+
+    @media (max-width:520px){
+      .timer{width:100px; height:100px}
+      .timer .inner{width:78px; height:78px}
+      .time{font-size:20px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="logo" aria-hidden="true">🧘‍♀️🦊</div>
+        <div>
+          <h1>Animal Stretches</h1>
+          <div class="subtitle">Learn fun, safe stretches inspired by animals — with a built‑in timer and voice coach.</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="voiceToggle" class="ghost" aria-pressed="true" title="Toggle voice guidance">🔊 Voice: On</button>
+        <button id="darkToggle" class="ghost" title="Theme">🌙 Theme</button>
+      </div>
+    </header>
+
+    <div class="row" style="margin-top:16px">
+      <div class="searchbar grow" role="search">
+        <span aria-hidden="true">🔎</span>
+        <input id="search" type="search" placeholder="Search animals or benefits (e.g. back, hips, balance)…" aria-label="Search stretches" />
+      </div>
+      <div class="row">
+        <span class="pill ghost" id="filterAll">All</span>
+        <span class="pill ghost" id="filterBalance">Balance</span>
+        <span class="pill ghost" id="filterBack">Back</span>
+        <span class="pill ghost" id="filterHips">Hips</span>
+      </div>
+    </div>
+
+    <section id="cards" class="grid" aria-live="polite"></section>
+
+    <details class="routine" open>
+      <summary>🎒 Class Mode (build a routine)</summary>
+      <div class="routine-list" id="routineList"></div>
+      <div class="startbar">
+        <button id="startRoutine" class="secondary">Start Routine ▶</button>
+        <div class="progressline"><span id="routineProgress"></span></div>
+        <div class="tiny" id="routineStatus">0 selected</div>
+      </div>
+    </details>
+
+    <p class="footer note">Tip: Tap a card to start its timer. The voice coach will read steps out loud. Keep movements gentle, breathe slowly, and stop if anything hurts.</p>
+  </div>
+
+  <template id="cardTemplate">
+    <article class="card" tabindex="0">
+      <div class="tag"></div>
+      <div class="row" style="align-items:flex-start">
+        <div class="icon" aria-hidden="true"></div>
+        <div class="grow">
+          <div class="name"></div>
+          <div class="desc"></div>
+        </div>
+      </div>
+      <ul class="steps"></ul>
+      <div class="timer" role="timer" aria-live="off" aria-atomic="true">
+        <div class="inner">
+          <div>
+            <div class="time">00:30</div>
+            <div class="tiny">Tap to start</div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="ghost small" data-action="toggle">Start ▶</button>
+        <button class="ghost small" data-action="reset">Reset ⟲</button>
+        <label class="tiny"><input type="checkbox" class="pick"/> Add to routine</label>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    // --- Data: kid‑safe stretches ---
+    const STRETCHES = [
+      {
+        id:"cobra", name:"Cobra", icon:"🐍", duration:30, tag:"Back",
+        desc:"Lie on your tummy and gently lift your chest like a curious snake.",
+        steps:[
+          "Lie on your belly. Hands under shoulders.",
+          "Press gently, lift your chest. Elbows stay bent.",
+          "Keep hips on the floor. Look forward. Breathe.",
+        ],
+        safety:"No pinching. Lower right away if your back feels tight.",
+      },
+      {
+        id:"butterfly", name:"Butterfly", icon:"🦋", duration:30, tag:"Hips",
+        desc:"Sit tall, feet together, knees open like wings.",
+        steps:[
+          "Sit with feet together, hold ankles.",
+          "Sit tall. Gently flap your knees like wings.",
+          "Relax shoulders. Slow breaths.",
+        ],
+        safety:"Knees stay comfy — no pushing down.",
+      },
+      {
+        id:"catcow", name:"Cat–Cow", icon:"🐱🐮", duration:30, tag:"Back",
+        desc:"On hands and knees, round like a cat, then gently arch like a cow.",
+        steps:[
+          "Hands under shoulders, knees under hips.",
+          "Round back, look to belly (Cat).",
+          "Drop belly, look forward (Cow).",
+        ],
+        safety:"Move slowly. Keep wrists under shoulders.",
+      },
+      {
+        id:"puppy", name:"Puppy", icon:"🐶", duration:30, tag:"Back",
+        desc:"Stretch your arms long like a playful puppy.",
+        steps:[
+          "Knees under hips, arms reach forward.",
+          "Lower chest toward floor, hips stay over knees.",
+          "Rest forehead, breathe.",
+        ],
+        safety:"If shoulders feel tight, lift a little.",
+      },
+      {
+        id:"flamingo", name:"Flamingo", icon:"🦩", duration:25, tag:"Balance",
+        desc:"Stand tall on one leg like a flamingo.",
+        steps:[
+          "Stand tall. Hold a wall if you like.",
+          "Bend one knee, hold your foot or just lift it.",
+          "Switch legs halfway.",
+        ],
+        safety:"Soft knees. Use support when needed.",
+      },
+      {
+        id:"elephant", name:"Elephant", icon:"🐘", duration:30, tag:"Back",
+        desc:"Swing your trunk to stretch your back and hamstrings.",
+        steps:[
+          "Feet wide. Clasp hands as a trunk.",
+          "Hinge forward with a long back.",
+          "Swing arms gently side to side.",
+        ],
+        safety:"Keep back long. Bend knees if tight.",
+      },
+      {
+        id:"turtle", name:"Turtle (Child's Pose)", icon:"🐢", duration:30, tag:"Back",
+        desc:"Curl into a cozy shell to rest and breathe.",
+        steps:[
+          "Kneel. Sit back toward heels.",
+          "Fold forward, arms long or by sides.",
+          "Slow belly breaths.",
+        ],
+        safety:"Place a pillow under hips if needed.",
+      },
+      {
+        id:"starfish", name:"Starfish", icon:"⭐", duration:25, tag:"Hips",
+        desc:"Stand wide, reach arms to the sky, side stretch each way.",
+        steps:[
+          "Feet wide, arms up.",
+          "Lean to one side, then the other.",
+          "Keep belly strong, breathe.",
+        ],
+        safety:"Only a gentle side bend, no crunching.",
+      },
+      {
+        id:"bear", name:"Bear Hang", icon:"🐻", duration:25, tag:"Back",
+        desc:"Let your arms dangle like a sleepy bear for a hamstring stretch.",
+        steps:[
+          "Feet hip‑width. Bend knees a bit.",
+          "Fold forward, let arms hang.",
+          "Shake head yes/no gently.",
+        ],
+        safety:"Stop if dizzy. Bend knees more anytime.",
+      },
+    ];
+
+    // --- State ---
+    let voiceOn = true;
+    let dark = false;
+
+    // --- Utilities ---
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+    function say(text){
+      if(!voiceOn) return;
+      try{
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1; u.pitch = 1.05; u.lang = navigator.language || 'en-US';
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      }catch(e){/* ignore */}
+    }
+
+    function formatTime(s){
+      s = Math.max(0, Math.floor(s));
+      const m = String(Math.floor(s/60)).padStart(2,'0');
+      const r = String(s%60).padStart(2,'0');
+      return `${m}:${r}`;
+    }
+
+    // --- Render cards ---
+    const cardsWrap = document.getElementById('cards');
+    const t = document.getElementById('cardTemplate');
+
+    function makeCard(item){
+      const card = t.content.firstElementChild.cloneNode(true);
+      card.dataset.id = item.id;
+      $('.tag', card).textContent = item.tag;
+      $('.icon', card).textContent = item.icon;
+      $('.name', card).textContent = `${item.name} Stretch`;
+      $('.desc', card).textContent = item.desc;
+      const steps = $('.steps', card);
+      item.steps.forEach(s => {
+        const li = document.createElement('li'); li.textContent = s; steps.appendChild(li);
+      });
+      const timeEl = $('.time', card);
+      timeEl.textContent = formatTime(item.duration);
+
+      // Timer logic
+      let remaining = item.duration;
+      let running = false; let rafId = null; let last = 0;
+      const timer = $('.timer', card);
+      const btnToggle = card.querySelector('[data-action="toggle"]');
+      const btnReset = card.querySelector('[data-action="reset"]');
+
+      function drawProgress(){
+        const pct = 1 - (remaining / item.duration);
+        const deg = Math.round(pct * 360);
+        timer.style.background = `conic-gradient(var(--brand) ${deg}deg, #e9e9ef 0deg)`;
+      }
+      drawProgress();
+
+      function tick(ts){
+        if(!running){return}
+        if(!last) last = ts; const dt = (ts - last)/1000; last = ts;
+        remaining -= dt; if(remaining <= 0){ remaining = 0; stop(); complete(); }
+        timeEl.textContent = formatTime(remaining);
+        drawProgress();
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function start(){
+        if(running) return; running = true; last = 0; rafId = requestAnimationFrame(tick);
+        btnToggle.textContent = 'Pause ⏸';
+        say(`${item.name}. ${item.steps.join(' ')} Start now for ${item.duration} seconds.`);
+      }
+      function pause(){ running = false; if(rafId) cancelAnimationFrame(rafId); btnToggle.textContent = 'Resume ▶'; }
+      function stop(){ running = false; if(rafId) cancelAnimationFrame(rafId); btnToggle.textContent = 'Start ▶'; }
+      function reset(){ stop(); remaining = item.duration; timeEl.textContent = formatTime(remaining); drawProgress(); }
+      function complete(){
+        celebrate(card);
+        say('Great job! Take a breath and a sip of water.');
+      }
+
+      // Events
+      btnToggle.addEventListener('click', () => running ? pause() : start());
+      btnReset.addEventListener('click', reset);
+      timer.addEventListener('click', () => running ? pause() : start());
+      card.addEventListener('keyup', (e)=>{ if(e.key==='Enter' || e.key===' '){ running ? pause() : start(); }});
+
+      // Routine checkbox
+      $('.pick', card).addEventListener('change', (e)=>{
+        updateRoutine(item.id, e.target.checked);
+      });
+
+      return card;
+    }
+
+    function render(list){
+      cardsWrap.innerHTML = '';
+      list.forEach(item => cardsWrap.appendChild(makeCard(item)));
+    }
+
+    // --- Search & Filters ---
+    function applyFilter(){
+      const q = $('#search').value.trim().toLowerCase();
+      const tagActive = document.querySelector('.pill.active')?.textContent || 'All';
+      const filtered = STRETCHES.filter(s => {
+        const hit = (s.name+" "+s.desc+" "+s.steps.join(' ')+" "+s.tag).toLowerCase().includes(q);
+        const tagOk = tagActive==='All' || s.tag===tagActive;
+        return hit && tagOk;
+      });
+      render(filtered);
+    }
+
+    $('#search').addEventListener('input', applyFilter);
+    ['filterAll','filterBalance','filterBack','filterHips'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.addEventListener('click', ()=>{
+        $$('.pill').forEach(p=>p.classList.remove('active'));
+        el.classList.add('active');
+        applyFilter();
+      });
+    });
+    document.getElementById('filterAll').classList.add('active');
+
+    // --- Routine Builder ---
+    const routine = new Set();
+    function updateRoutine(id, checked){
+      if(checked) routine.add(id); else routine.delete(id);
+      const items = STRETCHES.filter(s=>routine.has(s.id));
+      const list = document.getElementById('routineList');
+      list.innerHTML = '';
+      items.forEach(s=>{
+        const c = document.createElement('div'); c.className='chip';
+        c.innerHTML = `<input type="checkbox" checked data-id="${s.id}"><span>${s.icon}</span>${s.name}`;
+        c.querySelector('input').addEventListener('change', (e)=> updateRoutine(s.id, e.target.checked));
+        list.appendChild(c);
+      });
+      document.getElementById('routineStatus').textContent = `${items.length} selected`;
+      document.getElementById('routineProgress').style.width = '0%';
+    }
+
+    document.getElementById('startRoutine').addEventListener('click', async ()=>{
+      const items = STRETCHES.filter(s=>routine.has(s.id));
+      if(items.length===0){
+        alert('Pick at least one stretch.'); return;
+      }
+      let done = 0;
+      for(const s of items){
+        // Auto‑scroll to the card
+        const card = document.querySelector(`[data-id="${s.id}"]`);
+        card?.scrollIntoView({behavior:'smooth', block:'center'});
+        await runTimerOnCard(card, s);
+        done++;
+        document.getElementById('routineProgress').style.width = `${Math.round((done/items.length)*100)}%`;
+      }
+      celebrate(document.body);
+      say('Awesome routine! You finished all your stretches.');
+    });
+
+    function runTimerOnCard(card, s){
+      return new Promise(resolve=>{
+        const btn = card.querySelector('[data-action="toggle"]');
+        // Force reset then start
+        card.querySelector('[data-action="reset"]').click();
+        btn.click();
+        const check = setInterval(()=>{
+          const t = card.querySelector('.time').textContent;
+          if(t==='00:00'){
+            clearInterval(check);
+            resolve();
+          }
+        }, 300);
+      });
+    }
+
+    // --- Fun confetti ---
+    function celebrate(el){
+      const burst = document.createElement('div');
+      const colors = ['#7c5cff','#00c2a8','#ffb23f','#ff8a8a','#59d'], pieces = 24;
+      burst.style.position='absolute';
+      burst.style.inset='0';
+      burst.style.pointerEvents='none';
+      el.appendChild(burst);
+      const rect = el.getBoundingClientRect();
+      for(let i=0;i<pieces;i++){
+        const p = document.createElement('div');
+        p.style.position='absolute';
+        p.style.width='10px'; p.style.height='10px';
+        p.style.left= (rect.width/2)+'px'; p.style.top=(rect.height/2)+'px';
+        p.style.background= colors[i%colors.length];
+        p.style.borderRadius='3px';
+        p.style.transform=`translate(-50%,-50%) rotate(${Math.random()*360}deg)`;
+        p.style.transition='transform 900ms ease, opacity 900ms ease';
+        burst.appendChild(p);
+        requestAnimationFrame(()=>{
+          const dx = (Math.random()-0.5)*rect.width*0.6;
+          const dy = (Math.random()-0.5)*rect.height*0.6;
+          p.style.transform = `translate(${dx}px, ${dy}px) rotate(${Math.random()*720}deg)`;
+          p.style.opacity='0';
+        });
+      }
+      setTimeout(()=> burst.remove(), 1000);
+    }
+
+    // --- Toggles ---
+    document.getElementById('voiceToggle').addEventListener('click', (e)=>{
+      voiceOn = !voiceOn; e.currentTarget.setAttribute('aria-pressed', String(voiceOn));
+      e.currentTarget.textContent = (voiceOn? '🔊 Voice: On' : '🔇 Voice: Off');
+      if(voiceOn) say('Voice is now on.');
+    });
+
+    document.getElementById('darkToggle').addEventListener('click', ()=>{
+      dark = !dark;
+      document.documentElement.style.setProperty('--bg', dark? '#111218' : '#fffdf8');
+      document.documentElement.style.setProperty('--card', dark? '#181a21' : '#ffffff');
+      document.documentElement.style.setProperty('--ink', dark? '#f4f6ff' : '#1e222b');
+      document.documentElement.style.setProperty('--muted', dark? '#a9acc0' : '#60636f');
+      document.body.style.background = dark? 'radial-gradient(1200px 800px at 80% -10%, #1b1530 0%, transparent 60%), radial-gradient(900px 600px at -10% 110%, #0f2a24 0%, transparent 60%), #111218' : '';
+    });
+
+    // Initial render
+    render(STRETCHES);
+  </script>
+</body>
+</html>
